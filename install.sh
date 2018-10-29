@@ -1,90 +1,211 @@
 #!/bin/bash
-function main(){
-    if rpm --query centos-release | grep -q 'centos-release-6'; then
-        echo "Install on Centos 6..."
-        centos6
-        exit
-    elif rpm --query centos-release | grep -q 'centos-release-7'; then
-        echo "Install on Centos 7..."
-        centos7
-        exit
-    else
-        echo "CyberPanel needs to be installed on CentOS 6.X, 7.X system!"
-        exit
-    fi
-}
-
-function centos6(){
-    before
-}
-
-function centos7(){
-    before    
-}
-
-function before(){
-    RAM=$(free -m | awk 'NR==2{printf "%s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }')
-    DISK=$(df -h | awk '$NF=="/"{printf "%d/%dGB (%s)\n", $3,$2,$5}')
-
-    if systemctl is-active mysqld | grep -q 'active'; then
-
-        echo "MariaDB database installed."
-    else
-        echo -e "		OpenLiteSpeed Installer
+function webserver(){
+    echo -e "		Web Server
 
   RAM check : $RAM 
 
-  Recommended minimal \e[31m512MB\e[39m for MariaDB database installation.
+  Disk check : $DISK
 
-  Disk check : $DISK (Minimal \e[31m10GB\e[39m free space)
+  Which server do you want to install?
 
-  1. Install MariaDB database.
+  1. Install Apache.
 
-  2. Do not install MariaDB database.
+  2. Install Nginx.
 
-  3. Exit.
+  3. Install OpenLiteSpeed.
 
     "
+
+    while [[ -z "$WEBSERVER" ]]; do
         echo && stty erase '^H' && read -p "Please enter the number[1-3]: " num
         echo ""
         case "$num" in
             1)
-            maria_db
+            WEBSERVER=apache
+            echo "You have selected: Apache"
+            echo ""
             ;;
             2)
+            WEBSERVER=nginx
+            echo "You have selected: Nginx"
+            echo ""
             ;;
             3)
-            exit
+            WEBSERVER=openlitespeed
+            echo "You have selected: OpenLiteSpeed"
+            echo ""
             ;;
             *)
             echo -e "${Error} please enter the right number [1-3]"
             ;;
         esac
-    fi
+    done
 }
 
-function maria_db(){
-    echo -e "		CyberPanel Installer
+function phpversion(){
+    echo -e "		PHP Version
 
   RAM check : $RAM 
 
-  You have selected \e[31m$MYSQL_number2\e[39m, Please be mind with RAM requirement.
+  Disk check : $DISK
 
-  For MariaDB \e[31m10.0\e[39m, Recommended minimal \e[31m512MB\e[39m RAM.
+  Which PHP version do you want to install?
 
-  For MariaDB \e[31m10.1\e[39m and above, Recommended \e[31m1GB\e[39m RAM.
+  1. Install PHP \e[31m5.6\e[39m.
 
-  1. Install MariaDB \e[31m10.0\e[39m
+  2. Install PHP \e[31m7.0\e[39m.
 
-  2. Install MariaDB \e[31m10.1\e[39m
+  3. Install PHP \e[31m7.1\e[39m.
 
-  3. Install MariaDB \e[31m10.2\e[39m
-
-  4. Install MariaDB \e[31m10.3\e[39m
-
-  5. Exit.
+  4. Install PHP \e[31m7.2\e[39m.
 
     "
+
+    while [[ -z "$PHPVER" ]]; do
+        echo && stty erase '^H' && read -p "Please enter the number[1-4]: " num
+        echo ""
+        case "$num" in
+            1)
+            PHPVER=56
+            echo -e "You have selected: PHP \e[31m5.6\e[39m"
+            echo ""
+            ;;
+            2)
+            PHPVER=70
+            echo -e "You have selected: PHP \e[31m7.0\e[39m"
+            echo ""
+            ;;
+            3)
+            PHPVER=71
+            echo -e "You have selected: PHP \e[31m7.1\e[39m"
+            echo ""
+            ;;
+            4)
+            PHPVER=72
+            echo -e "You have selected: PHP \e[31m7.2\e[39m"
+            echo ""
+            ;;
+            *)
+            echo -e "${Error} please enter the right number [1-4]"
+            ;;
+        esac
+    done
+}
+
+function mariadbversion(){
+    echo -e "		MariaDB Version
+
+  RAM check : $RAM
+
+  Disk check : $DISK
+
+  Which MariaDB version do you want to install?
+
+  1. Install MariaDB \e[31m10.0\e[39m.
+
+  2. Install MariaDB \e[31m10.1\e[39m.
+
+  3. Install MariaDB \e[31m10.2\e[39m.
+
+  4. Install MariaDB \e[31m10.3\e[39m.
+
+    "
+
+    while [[ -z "$DBVER" ]]; do
+        echo && stty erase '^H' && read -p "Please enter the number[1-4]: " num
+        echo ""
+        case "$num" in
+            1)
+            DBVER=10.0
+            echo -e "You have selected: MariaDB \e[31m10.0\e[39m"
+            echo ""
+            ;;
+            2)
+            DBVER=10.1
+            echo -e "You have selected: MariaDB \e[31m10.1\e[39m"
+            echo ""
+            ;;
+            3)
+            DBVER=10.2
+            echo -e "You have selected: MariaDB \e[31m10.2\e[39m"
+            echo ""
+            ;;
+            4)
+            DBVER=10.3
+            echo -e "You have selected: MariaDB \e[31m10.3\e[39m"
+            echo ""
+            ;;
+            *)
+            echo -e "${Error} please enter the right number [1-4]"
+            ;;
+        esac
+    done
+}
+
+function database(){
+    echo -e "		Database
+
+  RAM check : $RAM 
+
+  Disk check : $DISK
+
+  Which Database do you want to install?
+
+  1. Install MariaDB.
+
+  2. Install PostgreSQL.
+
+  3. Does not install.
+
+    "
+
+    while [[ -z "$DB" ]]; do
+        echo && stty erase '^H' && read -p "Please enter the number[1-3]: " num
+        echo ""
+        case "$num" in
+            1)
+            DB=mariadb
+            echo "You have selected: MariaDB"
+            echo ""
+            mariadbversion
+            ;;
+            2)
+            DB=postgresql
+            echo "You have selected: PostgreSQL"
+            echo ""
+            ;;
+            3)
+            DB=none
+            echo "You have selected: Does not install"
+            echo ""
+            ;;
+            *)
+            echo -e "${Error} please enter the right number [1-3]"
+            ;;
+        esac
+    done
+}
+
+function main(){
+    if uname -m | grep -q 'i686'; then
+        echo "Script only support on 64 bit system!"
+        exit
+    elif uname -m | grep -q 'i386'; then
+        echo "Script only support on 64 bit system!"
+        exit
+    fi
+
+    if rpm --query centos-release | grep -q 'centos-release-6'; then
+        echo "Install on Centos 6..."
+    elif rpm --query centos-release | grep -q 'centos-release-7'; then
+        echo "Install on Centos 7..."
+    else
+        echo "Script only support on CentOS 6.X, 7.X system!"
+        exit
+    fi
+    webserver
+    phpversion
+    database
 }
 
 if [ $UID -ne 0 ]; then
@@ -94,5 +215,12 @@ if [ $UID -ne 0 ]; then
 else
 echo -e "\nYou are runing on root..."
 fi
+
+RAM=$(free -m | awk 'NR==2{printf "%s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }')
+DISK=$(df -h | awk '$NF=="/"{printf "%d/%dGB (%s)\n", $3,$2,$5}')
+WEBSERVER=
+PHPVER=
+DB=
+DBVER=
 
 main
